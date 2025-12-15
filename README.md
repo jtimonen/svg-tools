@@ -8,7 +8,7 @@ svg-tools is a simple viewer/debugger/animator for vector graphics assets. It wa
 
 Install deps:
 ```bash
-python -m pip install matplotlib svgpath2mpl
+python -m pip install -r requirements.txt
 ```
 
 ## Usage
