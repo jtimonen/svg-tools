@@ -20,7 +20,11 @@ svgtools info path/to/your.svg   # print metadata only
 # alternative without adding to PATH
 python -m svgtools plot path/to/your.svg
 ```
-The tool logs each path with its group trail, fill/stroke/opacity, transform, and bounding box, then renders the composed graphic in a Matplotlib window when using `plot`.
+The tool renders the composed graphic in a Matplotlib window when using `plot`. To export directly:
+```bash
+svgtools plot path/to/your.svg --png out.png    # save PNG at full viewBox size; omit to show window
+svgtools plot path/to/your.svg --png out.png --show  # save and also show
+```
 
 ## Notes
 - SVG transforms (matrix/translate/scale/rotate) are applied via Matplotlib `Affine2D`.

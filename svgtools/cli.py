@@ -13,8 +13,10 @@ def build_parser():
     info_parser = subparsers.add_parser("info", help="Print SVG metadata (dimensions, viewBox, counts).")
     info_parser.add_argument("svg_file", type=Path, help="Path to the SVG file to inspect.")
 
-    plot_parser = subparsers.add_parser("plot", help="Render the SVG and log paths.")
+    plot_parser = subparsers.add_parser("plot", help="Render the SVG (optionally export to PNG).")
     plot_parser.add_argument("svg_file", type=Path, help="Path to the SVG file to inspect.")
+    plot_parser.add_argument("--png", type=Path, dest="png_path", help="Save the rendered output to a PNG file.")
+    plot_parser.add_argument("--show", action="store_true", help="Show a window even when saving PNG.")
 
     return parser
 
@@ -36,7 +38,9 @@ def main(argv=None):
     if command == "info":
         print_info(svg_file)
     else:
-        plot_svg(svg_file)
+        out_path = getattr(args, "png_path", None)
+        show = args.show or out_path is None
+        plot_svg(svg_file, out_path=out_path, show=show)
 
 
 if __name__ == "__main__":

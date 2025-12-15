@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 import xml.etree.ElementTree as ET
 
 import matplotlib.pyplot as plt
@@ -15,7 +16,7 @@ from .svg import (
 )
 
 
-def plot_svg(svg_path: Path):
+def plot_svg(svg_path: Path, out_path: Optional[Path] = None, show: bool = True):
     tree = ET.parse(svg_path)
     root = tree.getroot()
 
@@ -23,11 +24,13 @@ def plot_svg(svg_path: Path):
     _, _, width, height = view_box
 
     fig, ax = plt.subplots(figsize=(6, 6), dpi=150)
+    ax.set_facecolor("none")
+    fig.patch.set_alpha(0)
 
     min_x = min_y = float("inf")
     max_x = max_y = float("-inf")
 
-    for idx, (node, groups, transform_matrix) in enumerate(iter_paths_with_groups(root), start=1):
+    for node, groups, transform_matrix in iter_paths_with_groups(root):
         d = node.attrib.get("d")
         if not d:
             continue
@@ -55,15 +58,6 @@ def plot_svg(svg_path: Path):
         min_x, min_y = min(min_x, xs.min()), min(min_y, ys.min())
         max_x, max_y = max(max_x, xs.max()), max(max_y, ys.max())
 
-        group_label = " > ".join(groups) if groups else "(root)"
-        print(
-            f"[{idx}] id={node.attrib.get('id', '(no id)')}, "
-            f"groups={group_label}, fill={fill}, stroke={stroke}, "
-            f"stroke_width={stroke_width}, opacity=(fill:{fill_opacity}, stroke:{stroke_opacity}), "
-            f"transform_matrix={transform_matrix}, "
-            f"bbox=({xs.min():.2f},{ys.min():.2f})-({xs.max():.2f},{ys.max():.2f})"
-        )
-
         ax.add_patch(
             PathPatch(
                 path,
@@ -73,16 +67,28 @@ def plot_svg(svg_path: Path):
             )
         )
 
-    if all(v != float("inf") for v in (min_x, min_y, max_x, max_y)):
-        pad_x = (max_x - min_x) * 0.05 or 1
-        pad_y = (max_y - min_y) * 0.05 or 1
-        ax.set_xlim(min_x - pad_x, max_x + pad_x)
-        ax.set_ylim(max_y + pad_y, min_y - pad_y)  # invert y-axis to match SVG origin
-    else:
+    if out_path:
+        # Preserve full viewBox when exporting so the canvas matches original dimensions.
         ax.set_xlim(0, width)
-        ax.set_ylim(height, 0)
+        ax.set_ylim(height, 0)  # invert y-axis to match SVG origin
+    else:
+        if all(v != float("inf") for v in (min_x, min_y, max_x, max_y)):
+            pad_x = (max_x - min_x) * 0.05 or 1
+            pad_y = (max_y - min_y) * 0.05 or 1
+            ax.set_xlim(min_x - pad_x, max_x + pad_x)
+            ax.set_ylim(max_y + pad_y, min_y - pad_y)  # invert y-axis to match SVG origin
+        else:
+            ax.set_xlim(0, width)
+            ax.set_ylim(height, 0)
 
     ax.set_aspect("equal")
     ax.axis("off")
     plt.tight_layout()
-    plt.show()
+
+    if out_path:
+        out_path = Path(out_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_path, bbox_inches=None, transparent=True, facecolor="none")
+    if show:
+        plt.show()
+    plt.close(fig)
