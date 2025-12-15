@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 from .info import print_info
-from .grid import create_grid_svg
+from .grid import create_grid_svg, move_tile
 from .render import plot_svg
 
 
@@ -25,6 +25,15 @@ def build_parser():
     grid_parser.add_argument("cols", type=int, help="Number of columns in the grid.")
     grid_parser.add_argument("output", type=Path, help="Output SVG path.")
 
+    move_parser = subparsers.add_parser("move", help="Copy tile at (i,j) to (k,l) in a grid SVG.")
+    move_parser.add_argument("svg_file", type=Path, help="Path to the grid SVG file.")
+    move_parser.add_argument("grid_size", type=float, help="Tile size (e.g., 405).")
+    move_parser.add_argument("src_row", type=int, help="Source row index.")
+    move_parser.add_argument("src_col", type=int, help="Source column index.")
+    move_parser.add_argument("dst_row", type=int, help="Destination row index.")
+    move_parser.add_argument("dst_col", type=int, help="Destination column index.")
+    move_parser.add_argument("output", type=Path, help="Output SVG path.")
+
     return parser
 
 
@@ -32,7 +41,7 @@ def main(argv=None):
     parser = build_parser()
 
     argv = sys.argv[1:] if argv is None else argv
-    known_commands = {"info", "plot", "grid"}
+    known_commands = {"info", "plot", "grid", "move"}
     if argv and argv[0] not in known_commands.union({"-h", "--help"}):
         argv = ["plot"] + argv
 
@@ -49,6 +58,18 @@ def main(argv=None):
         out_path = getattr(args, "output")
         create_grid_svg(svg_file, rows=args.rows, cols=args.cols, out_path=out_path)
         print(f"Wrote tiled SVG to {out_path}")
+    elif command == "move":
+        out_path = getattr(args, "output")
+        move_tile(
+            svg_file,
+            grid_size=args.grid_size,
+            src_row=args.src_row,
+            src_col=args.src_col,
+            dst_row=args.dst_row,
+            dst_col=args.dst_col,
+            out_path=out_path,
+        )
+        print(f"Copied tile ({args.src_row},{args.src_col}) to ({args.dst_row},{args.dst_col}) in {out_path}")
     else:
         out_path = getattr(args, "png_path", None)
         show = args.show or out_path is None
