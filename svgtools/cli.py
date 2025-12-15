@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from .info import print_info
+from .grid import create_grid_svg
 from .render import plot_svg
 
 
@@ -18,6 +19,12 @@ def build_parser():
     plot_parser.add_argument("--png", type=Path, dest="png_path", help="Save the rendered output to a PNG file.")
     plot_parser.add_argument("--show", action="store_true", help="Show a window even when saving PNG.")
 
+    grid_parser = subparsers.add_parser("grid", help="Create a new SVG with the source tiled in an NxM grid.")
+    grid_parser.add_argument("svg_file", type=Path, help="Path to the source SVG file.")
+    grid_parser.add_argument("rows", type=int, help="Number of rows in the grid.")
+    grid_parser.add_argument("cols", type=int, help="Number of columns in the grid.")
+    grid_parser.add_argument("output", type=Path, help="Output SVG path.")
+
     return parser
 
 
@@ -25,7 +32,8 @@ def main(argv=None):
     parser = build_parser()
 
     argv = sys.argv[1:] if argv is None else argv
-    if argv and argv[0] not in {"info", "plot", "-h", "--help"}:
+    known_commands = {"info", "plot", "grid"}
+    if argv and argv[0] not in known_commands.union({"-h", "--help"}):
         argv = ["plot"] + argv
 
     args = parser.parse_args(argv)
@@ -37,6 +45,10 @@ def main(argv=None):
 
     if command == "info":
         print_info(svg_file)
+    elif command == "grid":
+        out_path = getattr(args, "output")
+        create_grid_svg(svg_file, rows=args.rows, cols=args.cols, out_path=out_path)
+        print(f"Wrote tiled SVG to {out_path}")
     else:
         out_path = getattr(args, "png_path", None)
         show = args.show or out_path is None

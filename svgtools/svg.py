@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 from matplotlib.transforms import Affine2D
 
-NS = {"svg": "http://www.w3.org/2000/svg"}
+NS = {"svg": "http://www.w3.org/2000/svg", "xlink": "http://www.w3.org/1999/xlink"}
 SVG_TAG = f"{{{NS['svg']}}}"
 IDENTITY_MATRIX = [
     [1.0, 0.0, 0.0],
